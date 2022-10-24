@@ -96,11 +96,23 @@ func metric(m metricdata.Metrics) (*mpb.Metric, error) {
 	case metricdata.Sum[float64]:
 		out.Data, err = Sum[float64](a)
 	case metricdata.Histogram:
-		out.Data, err = Histogram(a)
+		out.Data, err = debugHist(out, a)
 	default:
 		return out, fmt.Errorf("%w: %T", errUnknownAggregation, a)
 	}
 	return out, err
+}
+
+func debugHist(out *mpb.Metric, h metricdata.Histogram) (*mpb.Metric_Histogram, error) {
+	fmt.Println("METRIC", out.Name, out.Description, out.Unit)
+
+	hist, err := Histogram(h)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("HISTOGRAM", hist.Histogram.AggregationTemporality.String(), len(hist.Histogram.DataPoints))
+
+	return hist, err
 }
 
 // Gauge returns an OTLP Metric_Gauge generated from g.
